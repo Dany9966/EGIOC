@@ -1,54 +1,44 @@
-package bouncysquare.cg.bouncysquare;
-
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
+package cg.bouncysquare;
 
 import javax.microedition.khronos.opengles.GL10;
 import javax.microedition.khronos.opengles.GL11;
-
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import android.content.Context;
 import android.graphics.*;
 import android.opengl.*;
 
-/**
- * Created by P17-15 on 4/19/2018.
- */
-
 public class Square {
-    private final FloatBuffer mFVertexBuffer;
-    private final ByteBuffer mColorBuffer;
-    private final ByteBuffer mIndexBuffer;
-    private int[] textures = new int[1];
-    public FloatBuffer mTextureBuffer;
-    float[] textureCoords =
-            {
-                    0.0f, 0.0f,
-                    1.0f, 0.0f,
-                    0.0f, 1.0f,
-                    1.0f, 1.0f
-            };
+    private FloatBuffer mFVertexBuffer;
+    private FloatBuffer mColorBuffer;
+    private FloatBuffer mTextureCoords0;
+    private FloatBuffer mTextureCoords1;
+    private ByteBuffer  mIndexBuffer;
 
 
-    public Square(float colorArray[]) {
+    private int mTexture0;
+    private int mTexture1;
+
+
+    public Square(float colors[])
+    {
         float vertices[] =
                 {
                         -1.0f, -1.0f,
                         1.0f, -1.0f,
-                        -1.0f, 1.0f,
-                        1.0f, 1.0f
+                        -1.0f,  1.0f,
+                        1.0f,  1.0f
                 };
 
-
-        byte maxColor=(byte)255;
-        byte colors[] =
+        float textureCoords[] =
                 {
-                        0, 0, 0, maxColor,
-                        maxColor, 0, 0, maxColor,
-                        0, 0, 0, maxColor,
-                        maxColor, 0, 0, maxColor,
+                        0.0f, 1.0f,
+                        1.0f, 1.0f,
+                        0.0f, 0.0f,
+                        1.0f, 0.0f
                 };
+
 
         byte indices[] =
                 {
@@ -56,77 +46,100 @@ public class Square {
                         0, 2, 3
                 };
 
-        /*float squareColorsYMCA[] =
-                {
-                        1.0f, 1.0f, 0.0f, 1.0f,
-                        0.0f, 1.0f, 1.0f, 1.0f,
-                        0.0f, 0.0f, 0.0f, 1.0f,
-                        1.0f, 0.0f, 1.0f, 1.0f
-                };
-        float squareColorsRGBA[] =
-                {
-                        1.0f, 0.0f, 0.0f, 1.0f,
-                        0.0f, 1.0f, 0.0f, 1.0f,
-                        0.0f, 0.0f, 1.0f, 1.0f,
-                        1.0f, 1.0f, 1.0f, 1.0f
-                };
-*/
-
         ByteBuffer vbb = ByteBuffer.allocateDirect(vertices.length * 4);
         vbb.order(ByteOrder.nativeOrder());
         mFVertexBuffer = vbb.asFloatBuffer();
         mFVertexBuffer.put(vertices);
         mFVertexBuffer.position(0);
-        mColorBuffer = ByteBuffer.allocateDirect(colorArray.length);
+
+        vbb = ByteBuffer.allocateDirect(colors.length * 4);
+        vbb.order(ByteOrder.nativeOrder());
+        mColorBuffer = vbb.asFloatBuffer();
         mColorBuffer.put(colors);
         mColorBuffer.position(0);
+
         mIndexBuffer = ByteBuffer.allocateDirect(indices.length);
         mIndexBuffer.put(indices);
         mIndexBuffer.position(0);
 
-        ByteBuffer tbb = ByteBuffer.allocateDirect(textureCoords.length * 4);
-        tbb.order(ByteOrder.nativeOrder());
-        mTextureBuffer = tbb.asFloatBuffer();
-        mTextureBuffer.put(textureCoords);
-        mTextureBuffer.position(0);
+        vbb = ByteBuffer.allocateDirect(textureCoords.length * 4);
+        vbb.order(ByteOrder.nativeOrder());
+        mTextureCoords0 = vbb.asFloatBuffer();
+        mTextureCoords0.put(textureCoords);
+        mTextureCoords0.position(0);
+
+        vbb = ByteBuffer.allocateDirect(textureCoords.length * 4);
+        vbb.order(ByteOrder.nativeOrder());
+        mTextureCoords1 = vbb.asFloatBuffer();
+        mTextureCoords1.put(textureCoords);
+        mTextureCoords1.position(0);
+
 
     }
 
-    public void draw(GL10 gl){
+    public void draw(GL10 gl)
+    {
+        gl.glEnable(GL10.GL_TEXTURE_2D);
+        gl.glBindTexture(GL10.GL_TEXTURE_2D,mTexture0);
+        gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
+
         gl.glFrontFace(GL11.GL_CW);
         gl.glVertexPointer(2, GL11.GL_FLOAT, 0, mFVertexBuffer);
-        //gl.glColorPointer(4, GL11.GL_UNSIGNED_BYTE, 0, mColorBuffer);
+        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+        gl.glColorPointer(4, GL11.GL_FLOAT, 0, mColorBuffer);
+        gl.glEnableClientState(GL10.GL_COLOR_ARRAY);
+
+        gl.glClientActiveTexture(GL10.GL_TEXTURE0);
+        gl.glTexCoordPointer(2, GL10.GL_FLOAT,0,mTextureCoords0);
+
+        gl.glClientActiveTexture(GL10.GL_TEXTURE1);
+        gl.glTexCoordPointer(2, GL10.GL_FLOAT,0,mTextureCoords1);
+
+        multiTexture(gl,mTexture0,mTexture1);
+
         gl.glDrawElements(GL11.GL_TRIANGLES, 6, GL11.GL_UNSIGNED_BYTE, mIndexBuffer);
-        gl.glEnable(GL10.GL_TEXTURE_2D);
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, mTexture0);
-        gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        /*gl.glEnable(GL10.GL_TEXTURE_2D);
-        gl.glEnable(GL10.GL_BLEND);
-        gl.glBlendFunc(GL10.GL_ONE, GL10.GL_SRC_COLOR);
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
-        gl.glTexCoordPointer(2, GL10.GL_FLOAT,0, mTextureBuffer);
-        gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        //float texIncrease = 1.0f;
-        /*textureCoords[0]+=texIncrease;
-        textureCoords[1]+=texIncrease;
-        textureCoords[2]+=texIncrease;
-        textureCoords[3]+=texIncrease;
-        textureCoords[4]+=texIncrease;
-        textureCoords[5]+=texIncrease;
-        textureCoords[6]+=texIncrease;
-        textureCoords[7]+=texIncrease;*/
-
-
+        gl.glFrontFace(GL11.GL_CCW);
     }
 
-    public void createTexture(GL10 gl, Context contextRegf, int resource){
-        Bitmap image = BitmapFactory.decodeResource(contextRegf.getResources(), resource);
-        gl.glGenTextures(1, textures, 0);
-        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
-        GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, image, 0);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR);
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-        image.recycle();
-
+    public void setTextures(GL10 gl,Context context,int resourceID0, int resourceID1)
+    {
+        mTexture0=createTexture(gl,context,resourceID0);
+        mTexture1=createTexture(gl,context,resourceID1);
     }
+
+    public int createTexture(GL10 gl, Context contextRegf, int resource)
+    {
+        int[] textures = new int[1];
+
+        Bitmap tempImage = BitmapFactory.decodeResource(contextRegf.getResources(), resource); // 1
+
+        gl.glGenTextures(1, textures, 0);                   // 2
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);  // 3
+
+        GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, tempImage, 0); // 4
+
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_LINEAR); // 5a
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR); // 5b
+
+        tempImage.recycle();//6
+
+        return textures[0];
+    }
+
+    public void multiTexture(GL10 gl, int tex0, int tex1)
+    {
+        float combineParameter= GL10.GL_DECAL;          //1
+
+        // Set up the First Texture.
+        gl.glActiveTexture(GL10.GL_TEXTURE0);                   //2
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, tex0);             //3
+
+        // Set up the Second Texture.
+        gl.glActiveTexture(GL10.GL_TEXTURE1);
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, tex1);
+
+        // Set the texture environment mode for this texture to combine.
+        gl.glTexEnvf(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE, combineParameter);  //4
+    }
+
 }
